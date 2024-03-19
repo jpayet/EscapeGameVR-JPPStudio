@@ -6,35 +6,34 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 public class GameManager : MonoBehaviour
 {
-    [Header("Timer Components")]
-    [SerializeField] private float gameTime = 600;
+    // Gestion du temps
     [SerializeField] private TextMeshProUGUI timeTextBox;
- 
+    [SerializeField] private float gameTime = 600;
+    private string gameTimeClockDisplay;
     public bool timerIsRunning;
 
+    // Gestion de l'avancement des énigmes
+    public bool DesactivatedLights = false;
+    public int enigmeAchivement;
+    public int destructedTarget = 0;
+
+    // Divers GameObjects référencés dans le script
     public GameObject player;
     public GameObject placeholder;
-    private string gameTimeClockDisplay;
- 
-    public int enigmeAchivement;
-
-    public bool DesactivatedLights = false;
-    
-
-    public int destructedTarget = 0;
     public GameObject porteRegie;
     public GameObject enigmeRegieLight;
-    public GameObject escapeKey;
     public GameObject pizzaCooked;
+    public GameObject escapeKey;
 
+    // Gestion de la musique
+    private AudioSource audioSource;
+    public AudioClip[] playlist;
+    public AudioClip monsterEatSound;
+
+    // Gestion du verrouillage des portes
     public XRGrabInteractable porteEntreeGrab;
     public XRGrabInteractable porteRegieGrab;
     public XRGrabInteractable porteReserveGrab;
-
-    // Liste des musiques dans la playlist
-    public AudioClip[] playlist;
-    private AudioSource audioSource;
-    public AudioClip monsterEatSound;
 
     private void Start()
     {
@@ -55,6 +54,9 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    /**************************************\
+    |  Gestion du temps (compte à rebours) |
+    \**************************************/
     void Update()
     {
         UpdateGameTimer();
@@ -93,49 +95,62 @@ public class GameManager : MonoBehaviour
         player.transform.position = placeholder.transform.position;
         player.transform.rotation = placeholder.transform.rotation;
 
-
         Transform locomotion = player.transform.Find("Locomotion System");
         locomotion.gameObject.SetActive(false);
     }
 
+    /*******************************\
+    |  Gestion de la musique du jeu |
+    \*******************************/
+    private void PlayNextTrack()
+    {
+        if (playlist.Length > 0)
+        {
+            audioSource.clip = playlist[0];
+            audioSource.Play();
+        }
+    }
+
+    /**************************************\
+    |  Gestion de l'avancement des énigmes |
+    \**************************************/
     public void IncrementEnigmeAchivement()
     {
         enigmeAchivement++;
     }
 
+    /**********************************************\
+    |  Méthodes spécifiques pour certaines énigmes |
+    \**********************************************/
     public void IncrementDestructedTarget()
     {
         destructedTarget++;
         if (destructedTarget == 3){
             porteRegie.transform.Rotate(Vector3.up, 10f, Space.World);
-            IncrementEnigmeAchivement();
             enigmeRegieLight.SetActive(true);
             porteRegieGrab.enabled = true;
-        }
-    }
 
-    public void OpenReserveDoor()
-    {
-        porteReserveGrab.enabled = true;
-    }
-
-    private void PlayNextTrack()
-    {
-        // Jouer la piste suivante dans la playlist
-        if (playlist.Length > 0)
-        {
-            audioSource.clip = playlist[0]; // Assurez-vous d'ajuster l'index si nécessaire
-            audioSource.Play();
+            IncrementEnigmeAchivement();
         }
     }
 
     public void GiveEscapeKey()
     {
         audioSource.PlayOneShot(monsterEatSound);
+
         escapeKey.SetActive(true);
         escapeKey.transform.position = pizzaCooked.transform.position;
         pizzaCooked.SetActive(false);
+
         IncrementEnigmeAchivement();
+    }
+ 
+    /*************************************\
+    | Gestion des verrouillage des portes |
+    \*************************************/
+    public void OpenReserveDoor()
+    {
+        porteReserveGrab.enabled = true;
     }
 
     public void OpenEntreeDoor()
